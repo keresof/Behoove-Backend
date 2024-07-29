@@ -1,5 +1,5 @@
-import mongoose,{Document,Schema} from "mongoose";
 export interface IUser extends Document {
+    _id: string;
     username: string;
     email: string;
     password: string;
@@ -14,4 +14,7 @@ export interface IUser extends Document {
     coins: number;
     createdAt: Date;
     updatedAt: Date;
+    googleId?: string;
+    facebookId?: string;
+    instagramId?: string;
 }

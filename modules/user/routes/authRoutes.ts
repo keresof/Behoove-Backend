@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import User from "../model/user";
 import { IUser } from '../../../interfaces/IUser';
+import passport from "passport";
 
 const router = express.Router();
 
@@ -70,5 +71,36 @@ router.post('/login', async (req: Request, res: Response) => {
         }
     }
 });
+
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+        // Successful authentication, redirect home.
+        res.redirect('/');
+    }
+);
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['profile', 'email','name'] }));
+
+router.get('/auth/facebook/callback',
+    passport.authenticate('facebook', { failureRedirect: '/login' }),
+    (req, res) => {
+        // Successful authentication, redirect home.
+        res.redirect('/');
+    }
+);
+
+router.get('/auth/instagram', passport.authenticate('instagram', { scope: ['profile', 'email'] }));
+
+router.get('/auth/instagram/callback',
+    passport.authenticate('instagram', { failureRedirect: '/login' }),
+    (req, res) => {
+        // Successful authentication, redirect home.
+        res.redirect('/');
+    }
+);
+
+
 
 export default router;

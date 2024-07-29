@@ -40,7 +40,11 @@ const userSchema = new mongoose.Schema({
     coins: {
         type: Number,
         default: 0
-    }
+    },
+    // Add these fields for social authentication
+    googleId: { type: String, sparse: true, unique: true },
+    facebookId: { type: String, sparse: true, unique: true },
+    instagramId: { type: String, sparse: true, unique: true },
 }, {
     timestamps: true,
     toJSON: {
