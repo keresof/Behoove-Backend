@@ -1,61 +1,66 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import User from '../model/user';
-import { IAuthService } from '../../../interfaces/IAuthService';
-import { IUser } from '../../../interfaces/IUser';
+import User, {IUser} from '../models/user';
+import Profile from '../../profile/models/profile';
+import mongoose from 'mongoose';
+import userService from './userService';
+import { IAuthResponse } from '../../../interfaces/IAuthResponse';
+import { createJwt } from './jwtService';
+import RefreshToken from '../models/refreshToken';
 
-class AuthService implements IAuthService {
-    private refreshTokens: string[] = [];
+class AuthService {
 
-    async register(email: string, password: string, name: string): Promise<IUser> {
-        const hashedPassword = await bcrypt.hash(password, 12); // Increased cost factor
-        const user = new User({ email, password: hashedPassword, name });
-        await user.save();
-        return user;
-    }
-
-    async login(email: string, password: string): Promise<{ accessToken: string, refreshToken: string }> {
-        const user = await User.findOne({ email });
+    async register(email: string, username: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthResponse>
+    {
+        const user = await userService.createUser(email, username, password);
         if (!user) {
-            throw new Error('User not found');
+            return {errors: ['Error creating user'], success: false};
         }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            throw new Error('Invalid credentials');
+        const [token, refreshToken] = await this.createTokens(user, ipAddress, userAgent);
+        return {success: true, accessToken: token, refreshToken};        
+    }
+
+    async login(email: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthResponse>
+    {
+        const user = await User.findOne({email});
+        if (!user || !(await user.verifyPassword(password))) {
+            return {errors: ['Invalid email or password'], success: false};
         }
-        const accessToken = this.generateAccessToken(user);
-        const refreshToken = this.generateRefreshToken(user);
-        this.refreshTokens.push(refreshToken);
-        return { accessToken, refreshToken };
+        const [token, refreshToken] = await this.createTokens(user, ipAddress, userAgent);
+        return {success: true, accessToken: token, refreshToken};
     }
 
-    async refreshToken(refreshToken: string): Promise<string> {
-        if (!this.refreshTokens.includes(refreshToken)) {
-            throw new Error('Invalid refresh token');
-        }
-        try {
-            const user = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET as string) as IUser;
-            const accessToken = this.generateAccessToken(user);
-            return accessToken;
-        } catch (error) {
-            throw new Error('Invalid refresh token');
+    async logout(refreshToken: string): Promise<void>
+    {
+        const token = await RefreshToken.findOneAndDelete({token: refreshToken});
+        if (token) {
+            await token.revoke();
         }
     }
 
-    verifyToken(token: string): any {
-        return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string);
+    async refresh(refreshToken: string, ipAddress?: string, userAgent?: string): Promise<IAuthResponse>
+    {
+        const token = await RefreshToken.findOne({token: refreshToken});
+        if (!token || !token.isValid()) {
+            return {errors: ['Invalid refresh token'], success: false};
+        }
+        const user = await User.findById(token.user);
+        if (!user) {
+            return {errors: ['User not found'], success: false};
+        }
+        const [newToken, newRefreshToken] = await this.createTokens(user, ipAddress, userAgent);
+        await token.revoke();
+        return {success: true, accessToken: newToken, refreshToken: newRefreshToken};
     }
 
-    async logout(refreshToken: string): Promise<void> {
-        this.refreshTokens = this.refreshTokens.filter(token => token !== refreshToken);
-    }
 
-    private generateAccessToken(user: IUser): string {
-        return jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET as string, { expiresIn: '15m' });
-    }
-
-    private generateRefreshToken(user: IUser): string {
-        return jwt.sign({ userId: user._id }, process.env.REFRESH_TOKEN_SECRET as string);
+    private async createTokens(user: IUser, ipAddress: string = 'unknown', userAgent: string = 'unknown'): Promise<any>{
+        const token = createJwt({sub: user.id});
+        const refreshToken = await RefreshToken.create({
+            user: user.id,
+            createdByIp: ipAddress,
+            userAgent,
+            token: RefreshToken.generateToken()
+        });
+        return [token, refreshToken.token];
     }
 }
 

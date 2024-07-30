@@ -1,14 +1,7 @@
 import * as mongoose from "mongoose";
-import * as bcrypt from "bcrypt";
-import { IUser } from "../../../interfaces/IUser";
+import { hash, compare } from "../../../utilities/cryptoService";
 
 const userSchema = new mongoose.Schema({
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true
-    },
     email: {
         type: String,
         required: true,
@@ -24,22 +17,6 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
-    },
-    profilePicture: {
-        type: String,
-        default: ''
-    },
-    bodyMeasurements: {
-        height: { type: Number, default: 0 },
-        weight: { type: Number, default: 0 },
-        chest: { type: Number, default: 0 },
-        waist: { type: Number, default: 0 },
-        hips: { type: Number, default: 0 },
-    },
-    coins: {
-        type: Number,
-        default: 0
     },
     // Add these fields for social authentication
     googleId: { type: String, sparse: true, unique: true },
@@ -60,7 +37,7 @@ function validatePassword(password: string) {
 }
 
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
+    if (!this.isModified('password') || !this.password) {
         return next();
     }
     try {
@@ -69,18 +46,28 @@ userSchema.pre('save', async function (next) {
         }
 
         // Hash the password
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-
+        this.password = await hash(this.password);
         next();
     } catch (err: any) {
         return next(err);
     }
 });
 
-// Add a method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword: string) {
-    return bcrypt.compare(candidatePassword, this.password);
+
+userSchema.methods.verifyPassword = async function(candidatePassword: string) {
+    return compare(candidatePassword, this.password);
 };
+
+export interface IUserMethods {
+    verifyPassword(candidatePassword: string): Promise<boolean>;
+}
+
+export interface IUser extends mongoose.Document, IUserMethods {
+    email: string;
+    password: string;
+    googleId?: string;
+    facebookId?: string;
+    instagramId?: string;
+}
 
 export default mongoose.model<IUser>('User', userSchema);
