@@ -6,6 +6,7 @@ import authRoutes from './modules/user/routes/authRoutes';
 import userRoutes from './modules/user/routes/userRoutes';
 import passport from './modules/user/services/socialAuth';
 import session from 'express-session';
+import bearerMiddleware from './middleware/bearerMiddleware';
 
 const PORT = process.env.PORT || 3030;
 
@@ -44,6 +45,7 @@ export const configureApp = (middleware?: any[]) => {
     // Initialize Passport
     app.use(passport.initialize());
     app.use(passport.session());
+    app.use(bearerMiddleware);
 
     // Swagger setup
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
