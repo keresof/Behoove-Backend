@@ -8,6 +8,13 @@ const profileSchema = new mongoose.Schema({
         min: 3,
         max: 30,
     },
+    displayName: {
+        type: String,
+        min: 3,
+        max: 30,
+        unique: true,
+        trim: true
+    },
     profilePicture: {
         type: String,
         default: ''
@@ -28,10 +35,31 @@ const profileSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     }
-},{
+}, {
     timestamps: true,
+    toJSON: {
+        transform: function (_doc, ret) {
+            ret.username = ret.displayName;
+            delete ret.displayName;
+            return ret;
+        }
+    }
 }
 );
+
+profileSchema.index({ username: 'text' });
+profileSchema.index({ user: 1 });
+
+profileSchema.pre("save", async function (next) {
+    if(this.isModified("user") && !this.isNew){
+        throw new Error("Cannot change user");
+    }
+    if (this.isModified("username")) {
+        this.displayName = this.username;
+        this.username = this.username?.toLowerCase();
+    }
+    next();
+});
 
 export interface IProfile extends mongoose.Document {
     username?: string;
