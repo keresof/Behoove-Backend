@@ -7,6 +7,7 @@ import userRoutes from './modules/user/routes/userRoutes';
 import bearerMiddleware from './middleware/bearerMiddleware';
 import passport from 'passport';
 import './infra/passportConfig';
+import connectDB from './infra/db';
 
 const PORT = process.env.PORT || 3030;
 
@@ -68,6 +69,7 @@ app.use('/api', authRoutes);
 
 if (!process.env.NODE_ENV || (process.env.NODE_ENV && process.env.NODE_ENV !== 'test')) {
     app.listen(PORT, () => {
+        connectDB();
         console.log(`Express app running on port ${PORT}`);
         console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
     });

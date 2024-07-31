@@ -7,6 +7,7 @@ const profileSchema = new mongoose.Schema({
         trim: true,
         min: 3,
         max: 30,
+        lowercase: true
     },
     displayName: {
         type: String,
