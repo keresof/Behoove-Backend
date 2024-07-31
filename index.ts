@@ -6,6 +6,7 @@ import authRoutes from './modules/user/routes/authRoutes';
 import userRoutes from './modules/user/routes/userRoutes';
 import bearerMiddleware from './middleware/bearerMiddleware';
 import passport from 'passport';
+import './infra/passportConfig';
 
 const PORT = process.env.PORT || 3030;
 
@@ -51,8 +52,8 @@ const app = configureApp([bearerMiddleware]);
 // Existing Swagger documentation...
 
 // Use the routes
+// app.use('/api', userRoutes);
 app.use('/api', authRoutes);
-app.use('/api', userRoutes);
 
 // // Social authentication routes
 // app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

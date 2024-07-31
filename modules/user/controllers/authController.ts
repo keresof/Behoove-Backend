@@ -75,7 +75,8 @@ export const socialInit = async (req: Request, res: Response) => {
                 scope: provider.toLowerCase() === 'facebook' ? ['profile', 'email', 'name'] : ['profile', 'email']
             }
         )(req, res);
-    } catch (error: unknown) {
-        res.status(500).json({ message: 'An unknown error occurred' });
+    } catch (error: any) {
+        console.error(error);
+        res.status(500).json({ message: 'An unknown error occurred', error });
     }
 }
