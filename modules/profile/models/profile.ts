@@ -33,4 +33,18 @@ const profileSchema = new mongoose.Schema({
 }
 );
 
+export interface IProfile extends mongoose.Document {
+    username?: string;
+    profilePicture?: string;
+    bodyMeasurements?: {
+        height: number;
+        weight: number;
+        chest: number;
+        waist: number;
+        hips: number;
+    };
+    coins?: number;
+    user: string;
+}
+
 export default mongoose.model('Profile', profileSchema);
