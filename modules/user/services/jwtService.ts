@@ -9,9 +9,12 @@ const { AUTH_JWT_SECRET } = process.env;
  * @returns signed token
  */
 export function createJwt(payload: any) {
+    if(!(payload instanceof Object)) {
+        throw new Error("Payload must be an object");
+    }
     return jwt.sign(
         // data payload
-        {...payload },
+        payload,
         (AUTH_JWT_SECRET as Secret),
         { expiresIn: ACCESS_TOKEN_EXPIRATION }
     );

@@ -3,9 +3,10 @@ import mongoose from "mongoose";
 const profileSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
         unique: true,
-        trim: true
+        trim: true,
+        min: 3,
+        max: 30,
     },
     profilePicture: {
         type: String,

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import User, { IUser } from '../models/user';
 import Profile from '../../profile/models/profile';
 class UserService   {
-    async createUser(email: string, username: string, password?: string, googleId?: string, facebookId?: string, instagramId?: string): Promise<IUser | null> {
+    async createUser(email: string, username?: string, password?: string, googleId?: string, facebookId?: string, instagramId?: string): Promise<IUser | null> {
         if (!password && !googleId && !facebookId && !instagramId) {
             throw new Error('Password or social id is required');
         }
