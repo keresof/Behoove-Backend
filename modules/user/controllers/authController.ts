@@ -75,3 +75,19 @@ export const socialInit = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'An unknown error occurred', error });
     }
 }
+
+export const logout = async (req: Request, res: Response) => {
+    try {
+        const user = req.user as IUser;
+        const accessToken = req.get('Authorization')?.split(' ')[1];
+        const refreshToken = req.body.refreshToken;
+        await authService.logout(user, accessToken!, refreshToken!);
+        res.json({ message: 'Logged out' });
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            res.status(500).json({ message: 'Error logging out' });
+        } else {
+            res.status(500).json({ message: 'An unknown error occurred' });
+        }
+    }
+}
