@@ -11,7 +11,7 @@ class UserService   {
         try {
             await session.withTransaction(async () => {
                 const user = new User({ email, password, googleId, facebookId, instagramId });
-                const profile = new Profile({ user: user._id, username });
+                const profile = new Profile({ user: user._id, username: username?.toLocaleLowerCase(), displayName: username });
                 await user.save({ session });
                 await profile.save({ session });
                 userId = user._id;

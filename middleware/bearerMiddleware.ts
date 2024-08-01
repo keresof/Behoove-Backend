@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { IExtReq } from "../interfaces/IExtReq";
+import authService from "../modules/user/services/authService";
 
 
 const { AUTH_JWT_SECRET, AUTH_REFRESH_SECRET } = process.env;
@@ -12,6 +13,9 @@ export default async (req: Request & IExtReq, res: Response, next: NextFunction)
     if (token) {
         token = token.split(" ")[1];
         try {
+            if(await authService.isTokenBlacklisted(token)){
+                return next();
+            }
             const decoded = jwt.verify(token, AUTH_JWT_SECRET!);
             req.user = (decoded as JwtPayload).sub;
         } catch (error) {

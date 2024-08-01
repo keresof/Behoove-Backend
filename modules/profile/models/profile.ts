@@ -55,10 +55,6 @@ profileSchema.pre("save", async function (next) {
     if(this.isModified("user") && !this.isNew){
         throw new Error("Cannot change user");
     }
-    if (this.isModified("username")) {
-        this.displayName = this.username;
-        this.username = this.username?.toLowerCase();
-    }
     next();
 });
 
