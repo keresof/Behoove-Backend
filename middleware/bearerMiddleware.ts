@@ -6,7 +6,7 @@ import authService from "../modules/user/services/authService";
 import userService from "../modules/user/services/userService";
 
 
-const { AUTH_JWT_SECRET, AUTH_REFRESH_SECRET } = process.env;
+const { AUTH_JWT_SECRET } = process.env;
 
 export default async (req: Request & IExtReq, res: Response, next: NextFunction)=> {
     let token = req.get("Authorization");
@@ -23,6 +23,7 @@ export default async (req: Request & IExtReq, res: Response, next: NextFunction)
             }
             req.user = (await userService.getUserById((decoded as JwtPayload).sub!))!;
         } catch (error) {
+            return next();
         }
     }
     return next();
