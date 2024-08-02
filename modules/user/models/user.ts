@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
     },
+    behooveCoins: {
+        type: Number,
+        default: 0
+    },
     // Add these fields for social authentication
     googleId: { type: String, sparse: true, unique: true },
     facebookId: { type: String, sparse: true, unique: true },
@@ -65,6 +69,7 @@ export interface IUserMethods {
 export interface IUser extends mongoose.Document, IUserMethods {
     email: string;
     password: string;
+    behooveCoins: number;
     googleId?: string;
     facebookId?: string;
     instagramId?: string;

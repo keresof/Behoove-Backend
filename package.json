@@ -6,7 +6,8 @@
     "start": "nodemon",
     "watch": "nodemon --watch '**/*.ts' --exec 'tsc && node dist/index.js'",
     "build": "tsc",
-    "test": "jest --verbose --runInBand"
+    "test": "jest --verbose --runInBand",
+    "swagger-autogen": "node ./swagger.js"
   },
   "author": "OSAugInt, keresoff",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "express": "^4.19.2",
     "express-mongo-sanitize": "^2.2.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.8.0",
     "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
     "passport": "^0.7.0",
@@ -49,6 +51,7 @@
     "mongodb-memory-server": "^10.0.0",
     "nodemon": "^3.1.4",
     "supertest": "^7.0.0",
+    "swagger-autogen": "^2.23.7",
     "ts-jest": "^29.2.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
