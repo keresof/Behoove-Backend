@@ -7,7 +7,10 @@ import userRoutes from './modules/user/routes/userRoutes';
 import bearerMiddleware from './middleware/bearerMiddleware';
 import passport from 'passport';
 import './infra/passportConfig';
+import './infra/redisConfig';
 import connectDB from './infra/db';
+import refreshToken from './modules/user/models/refreshToken';
+import { CLEAR_EXPIRED_TOKENS_INTERVAL } from './utilities/constants';
 
 const PORT = process.env.PORT || 3030;
 
@@ -54,22 +57,25 @@ const app = configureApp([bearerMiddleware]);
 
 // Use the routes
 // app.use('/api', userRoutes);
-app.use('/api', authRoutes);
+app.use('/api/auth', authRoutes);
 
-// // Social authentication routes
-// app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-// app.get('/auth/google/callback',
-//     passport.authenticate('google', { failureRedirect: '/login' }),
-//     (req, res) => {
-//         // Successful authentication, redirect or send token
-//         res.json({ user: req.user, token: (req.user as any).token });
-//     }
-// );
 
 if (!process.env.NODE_ENV || (process.env.NODE_ENV && process.env.NODE_ENV !== 'test')) {
     app.listen(PORT, () => {
         connectDB();
+        // clear expired refresh tokens on startup and setup interval to clear them periodically
+        // use iife to avoid top-level await
+        (async () => {
+            console.log('Clearing expired tokens...');
+            await refreshToken.deleteExpired();
+            console.log('Expired tokens cleared');
+            console.log(`Setting up interval to clear expired tokens every ${CLEAR_EXPIRED_TOKENS_INTERVAL} seconds`);
+            setInterval(async () => {
+                console.log('Clearing expired tokens...');
+                await refreshToken.deleteExpired();
+                console.log('Expired tokens cleared');
+            }, CLEAR_EXPIRED_TOKENS_INTERVAL! * 1000);
+        })();
         console.log(`Express app running on port ${PORT}`);
         console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
     });

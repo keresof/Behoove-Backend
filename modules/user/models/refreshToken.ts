@@ -2,6 +2,28 @@ import mongoose from "mongoose";
 import { REFRESH_TOKEN_EXPIRATION } from "../../../utilities/constants";
 import { randomBytes } from "crypto";
 import { compare, hash } from "../../../utilities/cryptoService";
+import { asyncFind } from "../../../utilities/utils";
+
+export interface IRefreshToken extends mongoose.Document {
+    token: string;
+    user: mongoose.Schema.Types.ObjectId;
+    createdByIp: string;
+    userAgent: string;
+    revoked: boolean;
+    isExpired(): boolean;
+    isValid(): boolean;
+    revoke(): Promise<IRefreshToken>;
+    validateToken(candidateToken: string): Promise<boolean>;
+}
+
+export interface IRefreshTokenModel extends mongoose.Model<IRefreshToken> {
+    deleteExpired(): Promise<void>;
+    generateToken(): Promise<string>;
+    findAllValid(): Promise<IRefreshToken[]>;
+    findByToken(token: string): Promise<IRefreshToken | null>;
+    findAllValid(): Promise<IRefreshToken[]>;
+}
+
 
 const refreshTokenSchema = new mongoose.Schema({
     token: {
@@ -44,7 +66,7 @@ refreshTokenSchema.pre('save', async function (next) {
 
 refreshTokenSchema.statics.deleteExpired = async function () {
     await this.deleteMany({
-        createdAt: { $lte: new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION * 1000)) }
+        createdAt: { $lte: new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION! * 1000)) }
     });
 };
 
@@ -53,8 +75,17 @@ refreshTokenSchema.statics.generateToken = async function() {
     return randomBytes(24).toString('hex');
 };
 
+refreshTokenSchema.statics.findAllValid = async function () {
+    return await this.find({ $and:[ { createdAt: { $gt: new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION! * 1000)) } }, { isRevoked: false } ] });
+}
+
+refreshTokenSchema.statics.findByToken = async function(token: string) {
+    const tokens: IRefreshToken[] = await this.find({ $and:[ { createdAt: { $gt: new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION! * 1000)) } }, { isRevoked: false } ] });
+    return await asyncFind(tokens, async t => await t.validateToken(token));
+};
+
 refreshTokenSchema.methods.isExpired = function() {
-    return this.createdAt <= new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION * 1000));
+    return this.createdAt <= new Date(Date.now() - (REFRESH_TOKEN_EXPIRATION! * 1000));
 };
 
 refreshTokenSchema.methods.isValid = function() {
@@ -70,21 +101,5 @@ refreshTokenSchema.methods.revoke = function() {
     return this.save();
 }
 
-export interface IRefreshToken extends mongoose.Document {
-    token: string;
-    user: mongoose.Schema.Types.ObjectId;
-    createdByIp: string;
-    userAgent: string;
-    revoked: boolean;
-    isExpired(): boolean;
-    isValid(): boolean;
-    revoke(): Promise<IRefreshToken>;
-    validateToken(candidateToken: string): Promise<boolean>;
-}
-
-export interface IRefreshTokenModel extends mongoose.Model<IRefreshToken> {
-    deleteExpired(): Promise<void>;
-    generateToken(): Promise<string>;
-}
 
 export default mongoose.model<IRefreshToken, IRefreshTokenModel>('RefreshToken', refreshTokenSchema);

@@ -5,6 +5,9 @@ import userService from './userService';
 import { IAuthResponse } from '../../../interfaces/IAuthResponse';
 import { createJwt } from './jwtService';
 import RefreshToken from '../models/refreshToken';
+import rds from '../../../infra/redisConfig'
+import { ACCESS_TOKEN_EXPIRATION } from '../../../utilities/constants';
+import { asyncFind } from '../../../utilities/utils';
 
 class AuthService {
 
@@ -14,7 +17,7 @@ class AuthService {
             return { errors: ['Error creating user'], success: false };
         }
         const [token, refreshToken] = await this.createTokens(user, ipAddress, userAgent);
-        return { success: true, accessToken: token, refreshToken };
+        return { success: true, accessToken: token!, refreshToken: refreshToken! };
     }
 
     async registerSocial(email: string, provider: string, id: string, ipAddress: string, userAgent: string): Promise<IAuthResponse> {
@@ -47,14 +50,14 @@ class AuthService {
                     return { errors: ['Invalid social provider'], success: false };
             }
             const [token, refreshToken] = await this.createTokens(user, ipAddress, userAgent);
-            return { success: true, accessToken: token, refreshToken };
+            return { success: true, accessToken: token!, refreshToken: refreshToken! };
         } else {
             const newUser = await userService.createUser(email, undefined, undefined, provider === 'google' ? id : undefined, provider === 'facebook' ? id : undefined, provider === 'instagram' ? id : undefined);
             if (!newUser) {
                 return { errors: ['Error creating user'], success: false };
             }
             const [token, refreshToken] = await this.createTokens(newUser, ipAddress, userAgent);
-            return { success: true, accessToken: token, refreshToken };
+            return { success: true, accessToken: token!, refreshToken: refreshToken! };
         }
     }
 
@@ -64,18 +67,25 @@ class AuthService {
             return { errors: ['Invalid email or password'], success: false };
         }
         const [token, refreshToken] = await this.createTokens(user, ipAddress, userAgent);
-        return { success: true, accessToken: token, refreshToken };
+        return { success: true, accessToken: token!, refreshToken: refreshToken! };
     }
 
-    async logout(refreshToken: string): Promise<void> {
-        const token = await RefreshToken.findOneAndDelete({ token: refreshToken });
-        if (token) {
+    async logout(user: IUser, accessToken:string, refreshToken: string): Promise<void> {
+        const tokens = await RefreshToken.find({user: user.id});
+        if(tokens && tokens.length > 0){
+            const token = await asyncFind(tokens, async t => await t.validateToken(refreshToken)); 
+            if(!token){
+                throw new Error('Invalid refresh token');
+            }
             await token.revoke();
+            await rds.set(`blacklisted_token:${accessToken}`, 1, {EX: ACCESS_TOKEN_EXPIRATION});
+        }else{
+            throw new Error('No refresh token found');
         }
     }
 
     async refresh(refreshToken: string, ipAddress?: string, userAgent?: string): Promise<IAuthResponse> {
-        const token = await RefreshToken.findOne({ token: refreshToken });
+        const token = await RefreshToken.findByToken(refreshToken);
         if (!token || !(await token.validateToken(refreshToken))) {
             return { errors: ['Invalid refresh token'], success: false };
         }
@@ -85,19 +95,24 @@ class AuthService {
         }
         const [newToken, newRefreshToken] = await this.createTokens(user, ipAddress, userAgent);
         await token.revoke();
-        return { success: true, accessToken: newToken, refreshToken: newRefreshToken };
+        return { success: true, accessToken: newToken!, refreshToken: newRefreshToken! };
+    }
+
+    async isTokenBlacklisted(token: string): Promise<boolean> {
+        return await rds.exists(`blacklisted_token:${token}`) === 1;
     }
 
 
-    async createTokens(user: IUser, ipAddress: string = 'unknown', userAgent: string = 'unknown'): Promise<any> {
-        const token = createJwt({ sub: user.id });
-        const refreshToken = await RefreshToken.create({
+    async createTokens(user: IUser, ipAddress: string = 'unknown', userAgent: string = 'unknown'): Promise<[string | undefined | null ,string | null]> {
+        const accessToken = createJwt({ sub: user.id });
+        const refreshToken = await RefreshToken.generateToken()
+        await RefreshToken.create({
             user: user.id,
             createdByIp: ipAddress,
             userAgent,
-            token: RefreshToken.generateToken()
+            token: refreshToken
         });
-        return [token, refreshToken.token];
+        return [accessToken, refreshToken];
     }
 }
 

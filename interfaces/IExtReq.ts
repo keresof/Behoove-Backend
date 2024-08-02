@@ -1,3 +1,5 @@
+import { IUser } from "../modules/user/models/user";
+
 export interface IExtReq {
-    user?: string | null;
+    user?: IUser | null;
 }
