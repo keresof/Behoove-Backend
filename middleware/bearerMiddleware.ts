@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { TokenExpiredError } from 'jsonwebtoken';
 import { IExtReq } from "../interfaces/IExtReq";
 import authService from "../modules/user/services/authService";
 import userService from "../modules/user/services/userService";
@@ -8,7 +7,7 @@ import userService from "../modules/user/services/userService";
 
 const { AUTH_JWT_SECRET } = process.env;
 
-export default async (req: Request & IExtReq, res: Response, next: NextFunction)=> {
+export default async (req: Request, res: Response, next: NextFunction)=> {
     let token = req.get("Authorization");
     (req as IExtReq).user = null;
     if (token) {
