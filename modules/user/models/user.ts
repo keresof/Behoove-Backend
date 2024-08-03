@@ -2,6 +2,7 @@ import * as mongoose from "mongoose";
 import { hash, compare } from "../../../utilities/cryptoService";
 
 const userSchema = new mongoose.Schema({
+   
     email: {
         type: String,
         required: true,
@@ -17,6 +18,10 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
+    },
+    behooveCoins: {
+        type: Number,
+        default: 0
     },
     // Add these fields for social authentication
     googleId: { type: String, sparse: true, unique: true },
@@ -63,8 +68,10 @@ export interface IUserMethods {
 }
 
 export interface IUser extends mongoose.Document, IUserMethods {
+    
     email: string;
     password: string;
+    behooveCoins: number;
     googleId?: string;
     facebookId?: string;
     instagramId?: string;

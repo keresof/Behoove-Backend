@@ -1,3 +1,5 @@
+import contentRoutes from "./modules/content/routes/contentRoutes";
+
 require('dotenv').config();
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
@@ -58,7 +60,7 @@ const app = configureApp([bearerMiddleware]);
 // Use the routes
 // app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/content', contentRoutes);
 
 if (!process.env.NODE_ENV || (process.env.NODE_ENV && process.env.NODE_ENV !== 'test')) {
     app.listen(PORT, () => {
