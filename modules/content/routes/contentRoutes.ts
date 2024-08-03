@@ -2,7 +2,7 @@ import express from 'express';
 import PostController from '../controllers/postController';
 import StoryController from '../controllers/storyController';
 import loginRequired from '../../../middleware/loginRequired';
-import usernameRequired from "../../../middleware/usernameRequired";
+import { usernameRequired } from "../../../middleware/usernameRequired";
 
 const router = express.Router();
 

@@ -2,6 +2,7 @@ import * as mongoose from "mongoose";
 import { hash, compare } from "../../../utilities/cryptoService";
 
 const userSchema = new mongoose.Schema({
+   
     email: {
         type: String,
         required: true,
@@ -67,6 +68,7 @@ export interface IUserMethods {
 }
 
 export interface IUser extends mongoose.Document, IUserMethods {
+    
     email: string;
     password: string;
     behooveCoins: number;
