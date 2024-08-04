@@ -19,12 +19,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
             return res.status(400).json({ message: 'Error registering user', errors: result.errors});
         }
         res.json({ token: result.accessToken, refreshToken: result.refreshToken });
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ message: 'Error registering user' });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
-        }
+    } catch (error: any) {
+        res.status(500).json({ message: error?.message });
     }
 }
 
