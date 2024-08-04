@@ -3,7 +3,7 @@ import PostController from '../controllers/postController';
 import StoryController from '../controllers/storyController';
 import loginRequired from '../../../middleware/loginRequired';
 import { usernameRequired } from "../../../middleware/usernameRequired";
-import {getMediaInfo, uploadMedia} from '../controllers/mediaController';
+import {getMediaInfo, listMedia, uploadMedia} from '../controllers/mediaController';
 import { upload } from '../../../middleware/uploadMiddleware';
 
 const router = express.Router();
@@ -38,5 +38,6 @@ router.post('/stories',usernameRequired, loginRequired, StoryController.createSt
 
 //  Upload routes
 router.post('/upload', loginRequired, usernameRequired, upload.single('media'), uploadMedia);
+router.get('/media', loginRequired, listMedia);
 router.get('/media/:fileKey', loginRequired, getMediaInfo);
 export default router;
