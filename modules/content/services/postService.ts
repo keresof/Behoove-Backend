@@ -1,147 +1,97 @@
-import mongoose, { Types } from 'mongoose';
-import Post, { IPost, IClothingItem } from '../models/post';
-import User from '../../user/models/user';
+import { Types } from 'mongoose';
+import Post, { IPost } from '../models/post';
+import { IItem } from '../../clothing/models/item';
 
 class PostService {
-    async createPost(authorId: string, content: string, media?: { type: string; url: string }[]): Promise<IPost> {
-        const post = new Post({
+    async createPost(authorId: string, content: string, media: string[], items: string[]): Promise<IPost | null> {
+        return await Post.create({
             author: new Types.ObjectId(authorId),
             content,
-            media
+            media: media.map((m) => new Types.ObjectId(m)),
+            items: items.map((i) => new Types.ObjectId(i)),
+            likes: [],
+            comments: [],
+            shares: []
         });
-        return await post.save();
     }
 
     async getPostById(postId: string): Promise<IPost | null> {
-        return await Post.findById(postId).populate('author', 'username');
+        return await Post.findById(postId).populate('author', 'media');
     }
 
     async likePost(postId: string, userId: string): Promise<IPost | null> {
-        return await Post.findByIdAndUpdate(
-            postId,
-            { $addToSet: { likes: new Types.ObjectId(userId) } },
-            { new: true }
-        );
+        const post = await Post.findById(postId);
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.likePost(new Types.ObjectId(userId));
     }
 
     async unlikePost(postId: string, userId: string): Promise<IPost | null> {
-        return await Post.findByIdAndUpdate(
-            postId,
-            { $pull: { likes: new Types.ObjectId(userId) } },
-            { new: true }
-        );
+        const post = await Post.findById(postId);
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.unlikePost(new Types.ObjectId(userId));
     }
 
     async addComment(postId: string, userId: string, content: string): Promise<IPost | null> {
-        return await Post.findByIdAndUpdate(
-            postId,
-            {
-                $push: {
-                    comments: {
-                        author: new Types.ObjectId(userId),
-                        content,
-                        createdAt: new Date(),
-                        likes: [],
-                        replies: []
-                    }
-                }
-            },
-            { new: true }
-        );
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.addComment({
+            author: new Types.ObjectId(userId),
+            content,
+            createdAt: new Date(),
+            likes: [],
+            replies: []
+        });
     }
 
     async addReplyToComment(postId: string, commentId: string, userId: string, content: string): Promise<IPost | null> {
-        return await Post.findOneAndUpdate(
-            { _id: postId, "comments._id": commentId },
-            {
-                $push: {
-                    "comments.$.replies": {
-                        author: new Types.ObjectId(userId),
-                        content,
-                        createdAt: new Date(),
-                        likes: []
-                    }
-                }
-            },
-            { new: true }
-        );
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.addReply(new Types.ObjectId(commentId), {
+            author: new Types.ObjectId(userId),
+            content,
+            createdAt: new Date(),
+            likes: []
+        });
     }
 
     async likeComment(postId: string, commentId: string, userId: string): Promise<IPost | null> {
-        return await Post.findOneAndUpdate(
-            { _id: postId, "comments._id": commentId },
-            { $addToSet: { "comments.$.likes": new Types.ObjectId(userId) } },
-            { new: true }
-        );
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.likeComment(new Types.ObjectId(commentId), new Types.ObjectId(userId));
     }
 
     async likeReply(postId: string, commentId: string, replyId: string, userId: string): Promise<IPost | null> {
-        return await Post.findOneAndUpdate(
-            { _id: postId, "comments._id": commentId, "comments.replies._id": replyId },
-            { $addToSet: { "comments.$[comment].replies.$[reply].likes": new Types.ObjectId(userId) } },
-            {
-                arrayFilters: [{ "comment._id": commentId }, { "reply._id": replyId }],
-                new: true
-            }
-        );
-    }
-
-    async sharePost(postId: string, userId: string): Promise<IPost | null> {
-        return await Post.findByIdAndUpdate(
-            postId,
-            { $addToSet: { shares: new Types.ObjectId(userId) } },
-            { new: true }
-        );
-    }
-
-    async addClothingItem(postId: string, clothingItem: IClothingItem): Promise<IPost | null> {
-        return await Post.findByIdAndUpdate(
-            postId,
-            { $push: { clothingItems: clothingItem } },
-            { new: true }
-        );
-    }
-
-    async sendBehooveCoins(postId: string, senderId: string, amount: number): Promise<IPost | null> {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
-        try {
-            const [sender, post] = await Promise.all([
-                User.findById(senderId),
-                Post.findById(postId)
-            ]);
-
-            if (!sender || !post) {
-                throw new Error('Sender or post not found');
-            }
-
-            if (sender.behooveCoins < amount) {
-                throw new Error('Insufficient behoove coins');
-            }
-
-            sender.behooveCoins -= amount;
-            await sender.save({ session });
-
-            const recipient = await User.findById(post.author);
-            if (!recipient) {
-                throw new Error('Post author not found');
-            }
-
-            recipient.behooveCoins += amount;
-            await recipient.save({ session });
-
-            post.coinTransactions.push({ sender: new Types.ObjectId(senderId), amount, createdAt: new Date() });
-            await post.save({ session });
-
-            await session.commitTransaction();
-            return post;
-        } catch (error) {
-            await session.abortTransaction();
-            throw error;
-        } finally {
-            session.endSession();
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
         }
+        return await post.likeReply(new Types.ObjectId(commentId), new Types.ObjectId(replyId), new Types.ObjectId(userId));
+    }
+
+    async sharePost(postId: string, fromId: string, toId: string): Promise<IPost | null> {
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.sharePost(new Types.ObjectId(fromId), new Types.ObjectId(toId));
+    }
+
+    async addClothingItem(postId: string, clothingItem: IItem): Promise<IPost | null> {
+        const post = await Post.findById(new Types.ObjectId(postId));
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        return await post.addItem(new Types.ObjectId((clothingItem.id as string)));
     }
 
     async getPostsByUser(userId: string, page: number = 1, limit: number = 10): Promise<IPost[]> {
@@ -149,7 +99,7 @@ class PostService {
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
-            .populate('author', 'username');
+            .populate('author', 'media');
     }
 
     async getFeedForUser(userId: string, page: number = 1, limit: number = 10): Promise<IPost[]> {
@@ -159,7 +109,7 @@ class PostService {
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
-            .populate('author', 'username');
+            .populate('author', 'media');
     }
 }
 
