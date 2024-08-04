@@ -89,7 +89,7 @@ class StoryController {
     async addClothingItem(req: Request, res: Response) {
         try {
             const { clothingItem } = req.body;
-            const story = await StoryService.addClothingItem(req.params.id, clothingItem);
+            const story = await StoryService.addItem(req.params.id, clothingItem);
             if (!story) {
                 return res.status(404).json({ message: 'Story not found' });
             }
