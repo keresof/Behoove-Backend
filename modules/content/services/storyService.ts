@@ -1,20 +1,23 @@
 import mongoose, { Types } from 'mongoose';
-import Story, { IStory, IClothingItem } from '../models/story';
-import User from '../../user/models/user';
+import Story, { IStory } from '../models/story';
+import Media from '../models/media';
 
 class StoryService {
-    async createStory(authorId: string, media: { type: 'image' | 'video', url: string }, caption?: string, clothingItems?: IClothingItem[]): Promise<IStory> {
+    async createStory(authorId: string, media: string[], caption?: string, items?: string[]): Promise<IStory> {
         const story = new Story({
             author: new Types.ObjectId(authorId),
-            media,
+            media: media.map(mediaId => new Types.ObjectId(mediaId)),
             caption,
-            clothingItems
+            items: items?.map(item => new Types.ObjectId(item))
         });
         return await story.save();
     }
 
     async getStoryById(storyId: string): Promise<IStory | null> {
-        return await Story.findById(storyId).populate('author', 'username');
+        return await Story.findById(storyId)
+            .populate('author', 'username')
+            .populate('media')
+            .populate('items');
     }
 
     async getUserStories(userId: string): Promise<IStory[]> {
@@ -22,7 +25,11 @@ class StoryService {
         return await Story.find({
             author: new Types.ObjectId(userId),
             createdAt: { $gte: twentyFourHoursAgo }
-        }).sort('-createdAt').populate('author', 'username');
+        })
+        .sort('-createdAt')
+        .populate('author', 'media')
+        .populate('media')
+        .populate('items');
     }
 
     async getFeedStories(userId: string): Promise<IStory[]> {
@@ -30,7 +37,11 @@ class StoryService {
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         return await Story.find({
             createdAt: { $gte: twentyFourHoursAgo }
-        }).sort('-createdAt').populate('author', 'username');
+        })
+        .sort('-createdAt')
+        .populate('author', 'media')
+        .populate('media')
+        .populate('items');
     }
 
     async viewStory(storyId: string, viewerId: string): Promise<IStory | null> {
@@ -48,33 +59,46 @@ class StoryService {
         );
     }
 
+    async likeStory(storyId: string, userId: string): Promise<IStory | null> {
+        const story = await Story.findById(storyId);
+        if (!story) return null;
+        await story.likeStory(new Types.ObjectId(userId));
+        return story;
+    }
+
+    async unlikeStory(storyId: string, userId: string): Promise<IStory | null> {
+        const story = await Story.findById(storyId);
+        if (!story) return null;
+        await story.unlikeStory(new Types.ObjectId(userId));
+        return story;
+    }
+
     async addReaction(storyId: string, userId: string, reaction: 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry'): Promise<IStory | null> {
-        return await Story.findByIdAndUpdate(
-            storyId,
-            {
-                $addToSet: {
-                    reactions: {
-                        user: new Types.ObjectId(userId),
-                        reaction
-                    }
-                }
-            },
-            { new: true }
-        );
+        const story = await Story.findById(storyId);
+        if (!story) return null;
+        await story.addReaction(new Types.ObjectId(userId), reaction);
+        return story;
     }
 
     async removeReaction(storyId: string, userId: string): Promise<IStory | null> {
+        const story = await Story.findById(storyId);
+        if (!story) return null;
+        await story.removeReaction(new Types.ObjectId(userId));
+        return story;
+    }
+
+    async addItem(storyId: string, itemId: string): Promise<IStory | null> {
         return await Story.findByIdAndUpdate(
             storyId,
-            { $pull: { reactions: { user: new Types.ObjectId(userId) } } },
+            { $addToSet: { items: new Types.ObjectId(itemId) } },
             { new: true }
         );
     }
 
-    async addClothingItem(storyId: string, clothingItem: IClothingItem): Promise<IStory | null> {
+    async removeItem(storyId: string, itemId: string): Promise<IStory | null> {
         return await Story.findByIdAndUpdate(
             storyId,
-            { $push: { clothingItems: clothingItem } },
+            { $pull: { items: new Types.ObjectId(itemId) } },
             { new: true }
         );
     }
@@ -85,7 +109,7 @@ class StoryService {
 
     async getViewerCount(storyId: string): Promise<number> {
         const story = await Story.findById(storyId);
-        return story ? story.viewers.length : 0;
+        return story ? story.viewersCount : 0;
     }
 
     async getReactionCounts(storyId: string): Promise<Record<string, number>> {
@@ -101,6 +125,11 @@ class StoryService {
         });
 
         return counts;
+    }
+
+    async getLikesCount(storyId: string): Promise<number> {
+        const story = await Story.findById(storyId);
+        return story ? story.likesCount : 0;
     }
 }
 

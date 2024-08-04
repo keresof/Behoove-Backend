@@ -11,7 +11,7 @@ router.post('/posts/:postId/comments/:commentId/replies/:replyId/like',usernameR
 router.post('/posts/:postId/comments/:commentId/reply', usernameRequired,loginRequired, PostController.addReplyToComment);
 router.post('/posts/:postId/comments/:commentId/like', usernameRequired,loginRequired, PostController.likeComment);
 router.post('/posts/:id/clothing-item',usernameRequired, loginRequired, PostController.addClothingItem);
-router.post('/posts/:id/send-coins',usernameRequired, loginRequired, PostController.sendBehooveCoins);
+// router.post('/posts/:id/send-coins',usernameRequired, loginRequired, PostController.sendBehooveCoins);
 router.post('/posts/:id/comment',usernameRequired, loginRequired, PostController.addComment);
 router.post('/posts/:id/unlike',usernameRequired, loginRequired, PostController.unlikePost);
 router.post('/posts/:id/share',usernameRequired, loginRequired, PostController.sharePost);

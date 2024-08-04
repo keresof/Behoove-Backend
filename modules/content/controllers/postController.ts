@@ -5,9 +5,9 @@ import { IUser } from '../../user/models/user';
 const PostController = {
     async createPost(req: Request, res: Response) {
         try {
-            const {content, media} = req.body;
+            const {content, media, items} = req.body;
             const user = req.user as IUser;
-            const post = await PostService.createPost(user.id, content, media);
+            const post = await PostService.createPost(user.id, content, media, items);
             res.status(201).json(post);
         } catch (error) {
             res.status(500).json({message: 'Error creating post', error: (error as Error).message});
@@ -105,7 +105,8 @@ const PostController = {
     async sharePost(req: Request, res: Response) {
         try {
             const user = req.user as IUser;
-            const post = await PostService.sharePost(req.params.id, user.id);
+            const toUser = req.body.toUser;
+            const post = await PostService.sharePost(req.params.id, user.id, toUser);
             if (!post) {
                 return res.status(404).json({message: 'Post not found'});
             }
@@ -126,19 +127,7 @@ const PostController = {
             res.status(500).json({message: 'Error adding clothing item', error: (error as Error).message});
         }
     },
-    async sendBehooveCoins(req: Request, res: Response) {
-        try {
-            const {amount} = req.body;
-            const user = req.user as IUser;
-            const post = await PostService.sendBehooveCoins(req.params.id, user.id, amount);
-            if (!post) {
-                return res.status(404).json({message: 'Post not found'});
-            }
-            res.json(post);
-        } catch (error) {
-            res.status(500).json({message: 'Error sending behoove coins', error: (error as Error).message});
-        }
-    },
+
     async getPostsByUser(req: Request, res: Response) {
         try {
             const {userId} = req.params;
