@@ -41,7 +41,7 @@ export async function asyncFind<T>(
 
 export async function sendError(res: Response, error: unknown){
     const is_debug = process.env?.NODE_ENV === 'development';
-    if(is_debug){
+    if(!is_debug){
         console.error(error);
         res.status(500).json({message: 'An error has occured. Check server logs'});
     }else{
