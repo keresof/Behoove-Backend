@@ -3,6 +3,7 @@ import { ILoginRequest } from "../../../interfaces/ILoginRequest";
 import User, { IUser } from "../models/user";
 import authService from "../services/authService";
 import passport from "passport";
+import { sendError } from "../../../utilities/utils";
 
 
 
@@ -20,11 +21,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
         }
         res.json({ token: result.accessToken, refreshToken: result.refreshToken });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ message: 'Error registering user' });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
-        }
+       sendError(res, error);
     }
 }
 
@@ -37,11 +34,7 @@ export const login = async (req: Request, res: Response) => {
         }
         res.json({ token: response.accessToken, refreshToken: response.refreshToken });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ message: 'Error logging in' });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
-        }
+        sendError(res, error);
     }
 }
 
@@ -53,11 +46,7 @@ export const socialCallback = async (req: Request, res: Response) => {
         const response = await authService.createTokens(req.user as IUser, req.ip || "unknown", req.get('User-Agent') || "unknown");
         res.json({ token: response[0], refreshToken: response[1] });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ message: 'Error logging in', error: error.message });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
-        }
+        sendError(res, error);
     }
 }
 
@@ -71,8 +60,7 @@ export const socialInit = async (req: Request, res: Response) => {
             }
         )(req, res);
     } catch (error: any) {
-        console.error(error);
-        res.status(500).json({ message: 'An unknown error occurred', error });
+        sendError(res, error);
     }
 }
 
@@ -84,10 +72,6 @@ export const logout = async (req: Request, res: Response) => {
         await authService.logout(user, accessToken!, refreshToken!);
         res.json({ message: 'Logged out' });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ message: 'Error logging out' });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
-        }
+        sendError(res, error);
     }
 }

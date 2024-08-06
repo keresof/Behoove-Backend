@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import PostService from '../services/postService';
 import { IUser } from '../../user/models/user';
+import { sendError } from '../../../utilities/utils';
 
 const PostController = {
     async createPost(req: Request, res: Response) {
@@ -10,7 +11,7 @@ const PostController = {
             const post = await PostService.createPost(user.id, content, media, items);
             res.status(201).json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error creating post', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async getPost(req: Request, res: Response) {
@@ -21,7 +22,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error getting post', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async likePost(req: Request, res: Response) {
@@ -33,7 +34,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error liking post', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async unlikePost(req: Request, res: Response) {
@@ -45,7 +46,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error unliking post', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async addComment(req: Request, res: Response) {
@@ -58,7 +59,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error adding comment', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async addReplyToComment(req: Request, res: Response) {
@@ -72,7 +73,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error adding reply to comment', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async likeComment(req: Request, res: Response) {
@@ -85,7 +86,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error liking comment', error: (error as Error).message});
+            sendError(res, error);
         }
     },
 
@@ -99,7 +100,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error liking reply', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async sharePost(req: Request, res: Response) {
@@ -112,7 +113,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error sharing post', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async addClothingItem(req: Request, res: Response) {
@@ -124,7 +125,7 @@ const PostController = {
             }
             res.json(post);
         } catch (error) {
-            res.status(500).json({message: 'Error adding clothing item', error: (error as Error).message});
+            sendError(res, error);
         }
     },
 
@@ -135,7 +136,7 @@ const PostController = {
             const posts = await PostService.getPostsByUser(userId, parseInt(page as string), parseInt(limit as string));
             res.json(posts);
         } catch (error) {
-            res.status(500).json({message: 'Error fetching user posts', error: (error as Error).message});
+            sendError(res, error);
         }
     },
     async getFeedForUser(req: Request, res: Response) {
@@ -145,7 +146,7 @@ const PostController = {
             const posts = await PostService.getFeedForUser(user.id, parseInt(page as string), parseInt(limit as string));
             res.json(posts);
         } catch (error) {
-            res.status(500).json({message: 'Error fetching feed', error: (error as Error).message});
+            sendError(res, error);
         }
     },
 }
