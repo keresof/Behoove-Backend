@@ -11,6 +11,7 @@ import passport from 'passport';
 import './infra/passportConfig';
 import './infra/redisConfig';
 import connectDB from './infra/db';
+import cors from 'cors';
 import refreshToken from './modules/user/models/refreshToken';
 import { CLEAR_EXPIRED_TOKENS_INTERVAL } from './utilities/constants';
 
@@ -59,6 +60,8 @@ const app = configureApp([bearerMiddleware]);
 
 // Use the routes
 // app.use('/api', userRoutes);
+
+app.use(cors());
 app.use('/api/auth', authRoutes);
 app.use('/api/content', contentRoutes);
 
