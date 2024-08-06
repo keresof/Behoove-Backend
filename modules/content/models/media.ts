@@ -44,7 +44,6 @@ export interface IMedia extends mongoose.Document {
     type: 'image' | 'video';
     url: string;
     fileKey: string;
-    fileName: string;
     size: number;
     mimeType: string;
     createdAt: Date;

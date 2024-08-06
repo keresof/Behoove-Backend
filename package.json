@@ -1,12 +1,11 @@
 {
   "name": "behoovebackend",
   "version": "0.0.1",
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon --watch '**/*.ts' --exec 'ts-node' src/index.ts",
+    "start": "nodemon",
+    "watch": "nodemon --watch '**/*.ts' --exec 'tsc && node dist/index.js'",
     "build": "tsc",
-    "postinstall": "npm run build",
     "test": "jest --verbose --runInBand",
     "swagger-autogen": "node ./swagger.js"
   },
