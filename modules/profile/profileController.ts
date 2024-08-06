@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { usernameAvailable, updateProfile} from './profileService';
 import { IProfile } from './models/profile';
 import { IExtReq } from '../../interfaces/IExtReq';
+import { sendError } from '../../utilities/utils';
 
 export const checkUsername = async (req: Request, res: Response) => {
     try {
@@ -12,7 +13,7 @@ export const checkUsername = async (req: Request, res: Response) => {
         const available = await usernameAvailable(username);
         res.json({ available });
     } catch (error: unknown) {
-        res.status(500).json({ message: 'An unknown error occurred' });
+        sendError(res, error);
     }
 }
 
@@ -22,6 +23,6 @@ export const update = async (req: Request, res: Response) => {
         const updated = await updateProfile(req.user?.id, command);
         res.json({ updated });
     } catch (error: unknown) {
-        res.status(500).json({ message: 'An unknown error occurred' });
+        sendError(res, error);
     }
 }
