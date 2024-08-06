@@ -3,6 +3,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import dotenv from 'dotenv';
+import rds from "../infra/redisConfig" // Import your Redis client
+
 dotenv.config();
 
 const s3Client = new S3Client({
@@ -34,11 +36,27 @@ export const upload = multer({
 });
 
 console.log('Multer S3 configuration complete');
+
 export const getSignedUrlForKey = async (key: string) => {
+    // Check for existing Redis key
+    const cachedUrl = await rds.get(`image_url:${key}`);
+    if (cachedUrl) {
+        console.log('Returning cached URL for key:', key);
+        return cachedUrl;
+    }
+
     const command = new GetObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME,
         Key: key,
     });
 
-    return getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
+
+    // Cache the URL in Redis
+    await rds.set(`image_url:${key}`, url, {
+        EX: 3600 // Set expiration to 1 hour (same as the signed URL)
+    });
+
+    console.log('Cached new URL for key:', key);
+    return url;
 };
