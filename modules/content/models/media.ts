@@ -22,10 +22,6 @@ const media = new mongoose.Schema({
         required: true,
         unique: true
     },
-    fileName: {
-        type: String,
-        required: true
-    },
     size: {
         type: Number,
         required: true

@@ -15,7 +15,6 @@ export const uploadMedia = async (req: Request, res: Response) => {
 
         const media = new Media({
             fileKey: file.key,
-            fileName: file.originalname,
             fileType: file.mimetype,
             uploadedBy: user.id,
             size: file.size,
