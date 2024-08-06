@@ -11,8 +11,7 @@ import passport from 'passport';
 import './infra/passportConfig';
 import './infra/redisConfig';
 import connectDB from './infra/db';
-import refreshToken from './modules/user/models/refreshToken';
-import { CLEAR_EXPIRED_TOKENS_INTERVAL } from './utilities/constants';
+import schedulerService from "./utilities/schedulerService";
 
 const PORT = process.env.PORT || 3030;
 
@@ -65,19 +64,7 @@ app.use('/api/content', contentRoutes);
 if (!process.env.NODE_ENV || (process.env.NODE_ENV && process.env.NODE_ENV !== 'test')) {
     app.listen(PORT, () => {
         connectDB();
-        // clear expired refresh tokens on startup and setup interval to clear them periodically
-        // use iife to avoid top-level await
-        (async () => {
-            console.log('Clearing expired tokens...');
-            await refreshToken.deleteExpired();
-            console.log('Expired tokens cleared');
-            console.log(`Setting up interval to clear expired tokens every ${CLEAR_EXPIRED_TOKENS_INTERVAL} seconds`);
-            setInterval(async () => {
-                console.log('Clearing expired tokens...');
-                await refreshToken.deleteExpired();
-                console.log('Expired tokens cleared');
-            }, CLEAR_EXPIRED_TOKENS_INTERVAL! * 1000);
-        })();
+        schedulerService.initialize();
         console.log(`Express app running on port ${PORT}`);
         console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
     });
