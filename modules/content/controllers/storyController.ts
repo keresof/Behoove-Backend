@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import StoryService from '../services/storyService';
 import { IUser } from '../../user/models/user';
+import { sendError } from '../../../utilities/utils';
 
 class StoryController {
     async createStory(req: Request, res: Response) {
@@ -10,7 +11,7 @@ class StoryController {
             const story = await StoryService.createStory(user.id, media, caption, clothingItems);
             res.status(201).json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error creating story', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -22,7 +23,7 @@ class StoryController {
             }
             res.json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error fetching story', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -32,7 +33,7 @@ class StoryController {
             const stories = await StoryService.getUserStories(userId);
             res.json(stories);
         } catch (error) {
-            res.status(500).json({ message: 'Error fetching user stories', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -42,7 +43,7 @@ class StoryController {
             const stories = await StoryService.getFeedStories(user.id);
             res.json(stories);
         } catch (error) {
-            res.status(500).json({ message: 'Error fetching feed stories', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -55,7 +56,7 @@ class StoryController {
             }
             res.json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error viewing story', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -69,7 +70,7 @@ class StoryController {
             }
             res.json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error adding reaction', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -82,7 +83,7 @@ class StoryController {
             }
             res.json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error removing reaction', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -95,7 +96,7 @@ class StoryController {
             }
             res.json(story);
         } catch (error) {
-            res.status(500).json({ message: 'Error adding clothing item', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -108,7 +109,7 @@ class StoryController {
             }
             res.json({ message: 'Story deleted successfully' });
         } catch (error) {
-            res.status(500).json({ message: 'Error deleting story', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -117,7 +118,7 @@ class StoryController {
             const count = await StoryService.getViewerCount(req.params.id);
             res.json({ viewerCount: count });
         } catch (error) {
-            res.status(500).json({ message: 'Error getting viewer count', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 
@@ -126,7 +127,7 @@ class StoryController {
             const counts = await StoryService.getReactionCounts(req.params.id);
             res.json(counts);
         } catch (error) {
-            res.status(500).json({ message: 'Error getting reaction counts', error: (error as Error).message });
+            sendError(res, error);
         }
     }
 }

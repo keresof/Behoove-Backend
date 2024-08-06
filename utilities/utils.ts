@@ -1,3 +1,5 @@
+import { Response } from "express";
+
 export function toSeconds(timeString: string) {
     const validUnits = ['s', 'm', 'h', 'd', 'w'];
     const unit = timeString.substring(timeString.length - 1);
@@ -36,3 +38,13 @@ export async function asyncFind<T>(
     }
     return undefined;
   }
+
+export async function sendError(res: Response, error: unknown){
+    const is_debug = process.env?.NODE_ENV === 'development';
+    if(is_debug){
+        console.error(error);
+        res.status(500).json({message: 'An error has occured. Check server logs'});
+    }else{
+        res.status(500).json({message: 'An error has occured', error: (error as Error).message});
+    }
+}
