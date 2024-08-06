@@ -68,7 +68,7 @@ export const listMedia = async (req: Request, res: Response) => {
             page: parseInt(page as string, 10),
             limit: parseInt(limit as string, 10),
             sort: { createdAt: -1 },
-            populate: { path: 'user', select: 'username' }
+            populate: [{ path: 'user' }]
         };
 
         const result = await Media.paginate(query, options);

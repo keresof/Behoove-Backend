@@ -54,7 +54,7 @@ export const getSignedUrlForKey = async (key: string) => {
 
     // Cache the URL in Redis
     await rds.set(`image_url:${key}`, url, {
-        EX: 3600 // Set expiration to 1 hour (same as the signed URL)
+        EX: 3590 // Set expiration to 1 hour (same as the signed URL)
     });
 
     console.log('Cached new URL for key:', key);
