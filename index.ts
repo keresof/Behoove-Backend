@@ -15,7 +15,6 @@ import schedulerService from "./utilities/schedulerService";
 
 
 const PORT = process.env.PORT || 3030;
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Swagger configuration
 const swaggerOptions = {
@@ -65,10 +64,7 @@ app.use(passport.initialize());
 const startServer = async () => {
     try {
         await connectDB();
-        console.log('Connected to MongoDB');
-
         await redisClient.ping();
-        console.log('Connected to Redis');
 
         app.listen(PORT, () => {
             console.log(`Express app running on port ${PORT}`);
