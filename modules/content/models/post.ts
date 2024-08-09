@@ -25,7 +25,8 @@ const shareSchema = new mongoose.Schema({
         required: true
     },
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON:{ virtuals: true }
 }
 );
 
