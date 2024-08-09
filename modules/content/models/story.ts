@@ -66,7 +66,8 @@ const storySchema = new mongoose.Schema({
         ref: 'Item'
     }]
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
 });
 
 storySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
